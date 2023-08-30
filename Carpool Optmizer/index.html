@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* estilos aqui */
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Carpool Optimizer</h1>
+        <p style="font-size: small;">by Freddy.M, Jack.K, Gabriel.S</p>
+    </header>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+    }
+
+    header {
+        background-color: #27474c;
+        color: #fff;
+        text-align: center;
+        padding: 1em 0;
+    }
+
+    main {
+        width: 80%;
+        max-width: 800px;
+        margin: 2em auto;
+        padding: 2em;
+        background-color: #fff;
+        box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .address-input-section, .carpool-section {
+        margin-bottom: 2em;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 0.5em;
+    }
+
+    input[type="text"] {
+        width: 100%;
+        padding: 0.5em;
+        margin-bottom: 1em;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    button {
+        display: block;
+        width: 100%;
+        padding: 0.8em;
+        background-color: #4CAF50;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+        background-color: #45a049;
+    }
+
+    .results-section p {
+        font-weight: bold;
+        margin: 1em 0;
+    }
+</style>
+</head>
+<body>
+
+<main>
+    <section class="address-input-section">
+        <label for="start-address">Endereço de partida:</label>
+        <input type="text" id="start-address" placeholder="Insira o ponto de partida">
+
+        <label for="end-address">Seu destino:</label>
+        <input type="text" id="end-address" placeholder="Insira seu destino final">
+    </section>
+
+    <section class="carpool-section">
+        <h2>Endereços dos colegas:</h2>
+
+        <div id="carpool-addresses">
+            <!-- Os endereços dos colegas serão inseridos aqui via JavaScript -->
+        </div>
+
+        <button id="add-address">Adicionar endereço</button>
+        <button id="calculate-route">Calcular Rota</button>
+        <button id="reset-addresses">Resetar endereços</button>
+    </section>
+
+    <section class="results-section">
+        <!-- Esta seção será preenchida com os resultados após clicar em "Calcular Rota" -->
+    </section>
+</main>
+
+<script>
+    (g=>{
+     var h,a,k,p="The Google Maps JavaScript API",
+     c="google",l="importLibrary",q="__ib__",m=document,b=window;
+     b=b[c]||(b[c]={});
+     var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,
+     u=()=>h||(h=new Promise(async(f,n)=>{
+         await(a=m.createElement("script"));
+         e.set("libraries",[...r]+"");
+         for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);
+         e.set("callback",c+".maps."+q);
+         a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;
+         a.onerror=()=>h=n(Error(p+" could not load."));
+         a.nonce=m.querySelector("script[nonce]")?.nonce||"";
+         m.head.append(a)
+     }));
+     d[l]?console.warn(p+" only loads once. Ignoring:",g):
+     d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))
+ })({
+   key: AIzaSyCQvFTCLFYF94Alx8W3FAVzxJWVCje2LMU,
+ });
+ </script>
+
+<script>
+    function initializeMap() {
+        // Essa função está vazia, pois ela é apenas um ponto de entrada para o carregamento assíncrono da API do Google Maps.
+    }
+
+    function calculateRoute() {
+        const startAddress = document.getElementById('start-address').value;
+        const endAddress = document.getElementById('end-address').value;
+        const colleaguesAddresses = document.querySelectorAll('.colleague-input');
+
+        const waypoints = Array.from(colleaguesAddresses).map(input => ({ location: input.value, stopover: true }));
+
+        const directionsService = new google.maps.DirectionsService();
+
+        directionsService.route({
+            origin: startAddress,
+            destination: endAddress,
+            waypoints: waypoints,
+            optimizeWaypoints: true,
+            travelMode: google.maps.TravelMode.DRIVING,
+            drivingOptions: {
+                trafficModel: google.maps.TrafficModel.BEST_GUESS
+            }
+        }, (response, status) => {
+            if (status === 'OK') {
+                const route = response.routes[0];
+                const resultsDiv = document.querySelector('.results-section');
+                resultsDiv.innerHTML = '<p>Rota Otimizada:</p>';
+                route.legs.forEach(leg => {
+                    const p = document.createElement('p');
+                    p.textContent = `${leg.start_address} até ${leg.end_address}: ${leg.duration.text} (${leg.distance.text})`;
+                    resultsDiv.appendChild(p);
+                });
+            } else {
+                console.error('Erro ao calcular a rota:', status);
+            }
+        });
+    }
+
+let addressCounter = 0;
+
+document.getElementById('add-address').addEventListener('click', function() {
+        addressCounter++;
+        const div = document.createElement('div');
+        div.className = 'carpool-address';
+        div.innerHTML = `
+            <label for="colleague${addressCounter}">Colega ${addressCounter}:</label>
+            <input type="text" class="colleague-input" placeholder="Endereço do Colega ${addressCounter}">
+            <button class="delete-button" data-index="${addressCounter}">X</button>
+        `;
+        document.getElementById('carpool-addresses').appendChild(div);
+
+        const deleteButtons = document.querySelectorAll('.delete-button');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const index = this.getAttribute('data-index');
+                const inputToRemove = document.querySelector(`.colleague-input[data-index="${index}"]`);
+                inputToRemove.parentNode.remove();
+            });
+        });
+
+        const colleagueInput = document.querySelector(`.colleague-input[data-index="${addressCounter}"]`);
+        colleagueInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                calculateRoute();
+            }
+        });
+    });
+document.getElementById('calculate-route').addEventListener('click', calculateRoute);
+
+document.getElementById('reset-addresses').addEventListener('click', function() {
+        addressCounter = 0;
+        document.getElementById('carpool-addresses').innerHTML = '';
+        
+        const resultsDiv = document.querySelector('.results-section');
+        resultsDiv.innerHTML = '';
+    });
+    const script = document.createElement('script');
+        script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCQvFTCLFYF94Alx8W3FAVzxJWVCje2LMU&callback=initializeMap';
+        script.async = true;
+        document.head.appendChild(script);
+    </script>
+</body>
+</html>
+
+
